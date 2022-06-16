@@ -19,7 +19,7 @@ permissions:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: survey
 
     steps:
     - uses: actions/checkout@v3
@@ -32,3 +32,10 @@ jobs:
       uses: gradle/gradle-build-action@0d13054264b0bb894ded474f08ebb30921341cee
       with:
         arguments: build
+    - name: Move build artifacts
+      run: mv build/libs/survey.jar /app/build/
+    - name: kill
+      run: if [ "$(netstat -tlnp | grep 80 | wc -l)" -gt 0 ]; then pkill -9 java; fi
+    - name: Start jar
+      working-directory: /app/build/
+      run: RUNNER_TRACKING_ID="" && (nohup java -Xmx1024m -Xms1024m -Xloggc:GClog.log -verbose:gc -XX:+PrintGCDateStamps -jar survey.jar --spring.config.name=application,log4j,url,key,messages.properties,messages_en.properties,messages_mn.properties --spring.config.location=file:///app/build/ > /app/build/survey.out 2>&1 &)
